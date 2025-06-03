@@ -6,9 +6,9 @@ pipeline {
         SONARQUBE_URL = 'http://3.86.93.46:9000'
         NEXUS_URL = 'http://54.242.72.14:8081' // ✅ Updated Nexus IP
         NEXUS_CREDENTIALS_ID = 'nexus-creds'
-        SLACK_CHANNEL = '#your-channel'
+        SLACK_CHANNEL = '#team'
         SLACK_CREDENTIALS_ID = 'slack-token'
-        TOMCAT_URL = 'http://3.86.140.185:8080/manager/text'
+        TOMCAT_URL = 'http://3.86.140.185:8080/manager/html'
         TOMCAT_CREDENTIALS_ID = 'tomcat-creds'
         MAVEN_SETTINGS_FILE_ID = 'my-maven-settings' // your managed settings.xml file ID in Jenkins
     }
