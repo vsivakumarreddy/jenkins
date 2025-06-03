@@ -10,6 +10,7 @@ pipeline {
         SLACK_CREDENTIALS_ID = 'slack-token'
         TOMCAT_URL = 'http://3.86.140.185:8080/manager/text'
         TOMCAT_CREDENTIALS_ID = 'tomcat-creds'
+        MAVEN_SETTINGS_FILE_ID = 'my-maven-settings' // your managed settings.xml file ID in Jenkins
     }
 
     stages {
@@ -24,7 +25,9 @@ pipeline {
                 script {
                     def mvnHome = tool 'MVN_HOME'
                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                        sh "${mvnHome}/bin/mvn clean verify sonar:sonar"
+                        configFileProvider([configFile(fileId: "${MAVEN_SETTINGS_FILE_ID}", variable: 'MAVEN_SETTINGS')]) {
+                            sh "${mvnHome}/bin/mvn -s $MAVEN_SETTINGS clean verify sonar:sonar"
+                        }
                     }
                 }
             }
@@ -34,7 +37,9 @@ pipeline {
             steps {
                 script {
                     def mvnHome = tool 'MVN_HOME'
-                    sh "${mvnHome}/bin/mvn clean package"
+                    configFileProvider([configFile(fileId: "${MAVEN_SETTINGS_FILE_ID}", variable: 'MAVEN_SETTINGS')]) {
+                        sh "${mvnHome}/bin/mvn -s $MAVEN_SETTINGS clean package"
+                    }
                 }
             }
         }
@@ -48,11 +53,13 @@ pipeline {
                         usernameVariable: 'NEXUS_USER',
                         passwordVariable: 'NEXUS_PASS'
                     )]) {
-                        sh """
-                            ${mvnHome}/bin/mvn deploy \
-                            -Dnexus.username=$NEXUS_USER \
-                            -Dnexus.password=$NEXUS_PASS
-                        """
+                        configFileProvider([configFile(fileId: "${MAVEN_SETTINGS_FILE_ID}", variable: 'MAVEN_SETTINGS')]) {
+                            sh """
+                                ${mvnHome}/bin/mvn -s $MAVEN_SETTINGS deploy \
+                                -Dnexus.username=$NEXUS_USER \
+                                -Dnexus.password=$NEXUS_PASS
+                            """
+                        }
                     }
                 }
             }
