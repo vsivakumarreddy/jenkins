@@ -1,16 +1,16 @@
 pipeline {
     agent any
-    
+
     environment {
         SONARQUBE_SERVER = 'SonarQube'
         SONARQUBE_URL = 'http://3.86.93.46:9000'
-        NEXUS_URL = 'http://3.82.57.183:8081'
+        NEXUS_URL = 'http://54.242.72.14:8081' // ✅ Updated Nexus IP
         NEXUS_CREDENTIALS_ID = 'nexus-creds'
         SLACK_CHANNEL = '#your-channel'
         SLACK_CREDENTIALS_ID = 'slack-token'
         TOMCAT_URL = 'http://3.86.140.185:8080/manager/text'
         TOMCAT_CREDENTIALS_ID = 'tomcat-creds'
-        MAVEN_SETTINGS_FILE_ID = 'my-maven-settings' // your managed settings.xml file ID in Jenkins
+        MAVEN_SETTINGS_FILE_ID = 'my-maven-settings'
     }
 
     stages {
@@ -66,43 +66,3 @@ pipeline {
         }
 
         stage('Slack Notification') {
-            steps {
-                withCredentials([string(credentialsId: "${SLACK_CREDENTIALS_ID}", variable: 'SLACK_TOKEN')]) {
-                    slackSend(
-                        token: SLACK_TOKEN,
-                        channel: "${SLACK_CHANNEL}",
-                        color: 'good',
-                        message: "✅ Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                    )
-                }
-            }
-        }
-
-        stage('Deploy to Tomcat') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: "${TOMCAT_CREDENTIALS_ID}",
-                    usernameVariable: 'TOMCAT_USER',
-                    passwordVariable: 'TOMCAT_PASS'
-                )]) {
-                    sh """
-                        curl -u $TOMCAT_USER:$TOMCAT_PASS -T target/SimpleCustomerApp.war "${TOMCAT_URL}/deploy?path=/SimpleCustomerApp&update=true"
-                    """
-                }
-            }
-        }
-    }
-
-    post {
-        failure {
-            withCredentials([string(credentialsId: "${SLACK_CREDENTIALS_ID}", variable: 'SLACK_TOKEN')]) {
-                slackSend(
-                    token: SLACK_TOKEN,
-                    channel: "${SLACK_CHANNEL}",
-                    color: 'danger',
-                    message: "❌ Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                )
-            }
-        }
-    }
-}
