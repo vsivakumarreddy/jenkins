@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+    
+    environment {
+        SONARQUBE_SERVER = 'SonarQube'    // Configure in Jenkins global tools/config with this name
+        SONARQUBE_URL = 'http://3.86.93.46:9000'
+        NEXUS_URL = 'http://3.82.57.183:8081'
+        NEXUS_CREDENTIALS_ID = 'nexus-creds'  // Jenkins credentials ID for Nexus
+        SLACK_CHANNEL = '#your-channel'
+        SLACK_CREDENTIALS_ID = 'slack-token' // Jenkins Slack token credentials ID
+        TOMCAT_URL = 'http://3.86.140.185:8080/manager/text'
+        TOMCAT_CREDENTIALS_ID = 'tomcat-creds' // Jenkins credentials ID for Tomcat
+    }
+
+    stages {
+        stage('Git Clone') {
+            steps {
+                git url: 'https://github.com/manikiran7/jenkins.git', branch: 'main'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn clean verify sonar:sonar -Dsonar.host.url=${SONARQUBE_URL}'
+                }
+            }
+        }
+
+        stage('Maven Compile') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Nexus Upload') {
+            steps {
+                script {
+                    def mvnDeployCmd = "mvn deploy -Dnexus.url=${NEXUS_URL} -Dnexus.username=${NEXUS_CREDENTIALS_ID} -Dnexus.password=${NEXUS_CREDENTIALS_ID}"
+                    withCredentials([usernamePassword(credentialsId: "${NEXUS_CREDENTIALS_ID}", passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
+                        sh "mvn deploy -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS"
+                    }
+                }
+            }
+        }
+
+        stage('Slack Notification') {
+            steps {
+                slackSend(channel: "${SLACK_CHANNEL}", color: 'good', message: "Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}")
+            }
+        }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${TOMCAT_CREDENTIALS_ID}", passwordVariable: 'TOMCAT_PASS', usernameVariable: 'TOMCAT_USER')]) {
+                    sh """
+                    curl -u $TOMCAT_USER:$TOMCAT_PASS -T target/SimpleCustomerApp.war "${TOMCAT_URL}/deploy?path=/SimpleCustomerApp&update=true"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            slackSend(channel: "${SLACK_CHANNEL}", color: 'danger', message: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}")
+        }
+    }
+}
