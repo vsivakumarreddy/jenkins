@@ -15,6 +15,16 @@
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
+    <dependencies>
+        <!-- Servlet API Dependency - REQUIRED for compiling Java Servlets -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version> <!-- Use a version compatible with your Tomcat (e.g., 4.0.1 for Servlet 4.0, or 3.1.0 for Servlet 3.1) -->
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -37,15 +47,17 @@
 
             <plugin>
                 <groupId>org.apache.tomcat.maven</groupId>
-                <artifactId>tomcat7-maven-plugin</artifactId>  <version>2.2</version>
+                <artifactId>tomcat7-maven-plugin</artifactId>
+                <version>2.2</version>
                 <configuration>
                     <url>http://44.212.0.147:8080/manager/text</url>
-                    <path>/SimpleCustomerApp</path>
+                    <path>/SimpleCustomerApp</path> <!-- Consider changing this to /Simpleservlet -->
                     <update>true</update>
                     <server>tomcat-server</server>
-                    <tomcatVersion>9.0.105</tomcatVersion> </configuration>
+                    <tomcatVersion>9.0.105</tomcatVersion>
+                </configuration>
             </plugin>
-            </plugins>
+        </plugins>
     </build>
 
     <distributionManagement>
