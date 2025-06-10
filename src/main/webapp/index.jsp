@@ -1,15 +1,14 @@
-<!DOCTYPE html>
-<html>
+!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Updated Customer App Welcome</title>
+    <title>Welcome Manikiran</title> <!-- Changed title here -->
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 40px;
             background-color: #f4f4f4;
             color: #333;
-            text-align: center;
         }
         h1 {
             color: #0056b3;
@@ -40,7 +39,7 @@
     </style>
 </head>
 <body>
-    <h1>Welcome to the Refreshed Manikiran App!</h1>
+    <h1>Welcome Manikiran!</h1> <!-- Changed heading here -->
     <p>We've made some exciting updates to enhance your experience.</p>
     <p>This is the main entry point for your web application.</p>
 
