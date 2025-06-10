@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+
+    <display-name>mani kiran app</display-name>
+
+    <!-- Welcome file list (optional, but good practice for default access) -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <!-- Servlet mapping (if not using @WebServlet annotation in Java code)
+         Since we are using @WebServlet, this section is technically not strictly required
+         but included for completeness and traditional WAR file structure. -->
+    <!--
+    <servlet>
+        <servlet-name>SimpleServlet</servlet-name>
+        <servlet-class>com.example.SimpleServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SimpleServlet</servlet-name>
+        <url-pattern>/hello</url-pattern>
+    </servlet-mapping>
+    -->
+</web-app>
