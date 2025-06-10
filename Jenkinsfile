@@ -31,8 +31,11 @@ pipeline {
                 git url: 'https://github.com/manikiran7/simple.git', branch: 'main'
             }
         }
-
-       
+        stage('Verify POM') { 
+    steps {
+        sh 'cat pom.xml'
+    }
+}       
         stage('Build') {
             steps {
                 
