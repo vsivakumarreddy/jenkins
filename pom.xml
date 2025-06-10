@@ -51,7 +51,7 @@
     <distributionManagement>
         <snapshotRepository>
             <id>nexus</id>
-            <url>http://3.91.201.163:8081/repository/simpleservlet/</url>
+            <url>http://34.233.134.210:8081/repository/simpleservlet/</url>
         </snapshotRepository>
     </distributionManagement>
 </project>
