@@ -1,69 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+    <project xmlns="http://maven.apache.org/POM/4.0.0"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.visualpathit</groupId>
-    <artifactId>Simpleservlet</artifactId>
-    <packaging>war</packaging>
-    <version>1.0.0</version>
-    <name>Simpleservlet</name>
+        <groupId>com.visualpathit</groupId>
+        <artifactId>Simpleservlet</artifactId>
+        <packaging>war</packaging>
+        <version>1.0.0</version> <!-- This is now a release version -->
+        <name>Simpleservlet</name>
 
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
+        <properties>
+            <maven.compiler.source>1.8</maven.compiler.source>
+            <maven.compiler.target>1.8</maven.compiler.target>
+        </properties>
 
-    <dependencies>
-        <!-- Servlet API Dependency - REQUIRED for compiling Java Servlets -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version> <!-- Use a version compatible with your Tomcat (e.g., 4.0.1 for Servlet 4.0, or 3.1.0 for Servlet 3.1) -->
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
+        <dependencies>
+            <!-- Servlet API Dependency - REQUIRED for compiling Java Servlets -->
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>4.0.1</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-                <configuration>
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
-                </configuration>
-            </plugin>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <source>${maven.compiler.source}</source>
+                        <target>${maven.compiler.target}</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.3.2</version>
+                    <configuration>
+                        <failOnMissingWebXml>false</failOnMissingWebXml>
+                    </configuration>
+                </plugin>
 
-            <plugin>
-                <groupId>org.apache.tomcat.maven</groupId>
-                <artifactId>tomcat7-maven-plugin</artifactId>
-                <version>2.2</version>
-                <configuration>
-                    <url>http://44.212.0.147:8080/manager/text</url>
-                    <path>/Simpleservlet</path> <!-- Consider changing this to /Simpleservlet -->
-                    <update>true</update>
-                    <server>tomcat-server</server>
-                    <tomcatVersion>9.0.105</tomcatVersion>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+                <plugin>
+                    <groupId>org.apache.tomcat.maven</groupId>
+                    <artifactId>tomcat7-maven-plugin</artifactId>
+                    <version>2.2</version>
+                    <configuration>
+                        <url>http://44.212.0.147:8080/manager/text</url>
+                        <path>/Simpleservlet</path>
+                        <update>true</update>
+                        <server>tomcat-server</server>
+                        <tomcatVersion>9.0.105</tomcatVersion>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </build>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>nexus</id>
-            <url>http://34.233.134.210:8081/repository/simpleservlet/</url>
-        </snapshotRepository>
-    </distributionManagement>
-</project>
+        <distributionManagement>
+            <!-- Repository for RELEASE versions (like 1.0.0). -->
+            <!-- This is where Maven will deploy artifacts with non-SNAPSHOT versions. -->
+            <repository>
+                <id>nexus</id> <!-- This ID must match a server ID in your settings.xml -->
+                <url>http://34.233.134.210:8081/repository/simpleservlet/</url>
+            </repository>
+        </distributionManagement>
+    </project>
