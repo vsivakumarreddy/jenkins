@@ -64,7 +64,7 @@ pipeline {
     </server>
   </servers>
 
-  <!-- IMPORTANT: The mirror section is commented out here as well.
+  <!-- IMPORTANT: The mirror section is commented out here.
        This allows Maven to resolve standard dependencies (like javax.servlet-api)
        from Maven Central, while still using Nexus for your project's deployment.
        For a proper Nexus setup, you would typically have a Nexus group repository
@@ -106,8 +106,23 @@ pipeline {
   </profiles>
 </settings>
 """
+                        // Security Warning: Passing secrets via Groovy String interpolation is insecure.
+                        // For production, consider using Jenkins' Config File Provider plugin
+                        // or injecting credentials directly into system properties for Maven.
                         writeFile(file: 'nexus-settings.xml', text: nexusSettingsContent)
                         
+                        echo "Contents of nexus-settings.xml:"
+                        sh 'cat nexus-settings.xml'
+                        echo "--- End of nexus-settings.xml ---"
+
+                        echo "Effective Maven Settings:"
+                        sh "mvn help:effective-settings -s nexus-settings.xml"
+                        echo "--- End of Effective Maven Settings ---"
+
+                        echo "Effective Maven POM:"
+                        sh "mvn help:effective-pom"
+                        echo "--- End of Effective Maven POM ---"
+
                         sh "mvn deploy -DskipTests -s nexus-settings.xml"
                     }
                 }
@@ -132,6 +147,7 @@ pipeline {
   </servers>
 </settings>
 """
+                        // Security Warning: Passing secrets via Groovy String interpolation is insecure.
                         writeFile(file: 'tomcat-settings.xml', text: tomcatSettingsContent)
 
                         sh "mvn tomcat7:redeploy -s tomcat-settings.xml"
