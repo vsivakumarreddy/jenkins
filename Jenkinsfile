@@ -20,6 +20,19 @@ pipeline {
             }
         }
 
+        // NEW STAGE: Clean Maven local repository to avoid old cached metadata
+        stage('Clean Maven Local Repo') {
+            steps {
+                script {
+                    // This command removes the specific artifact and its metadata from the local Maven cache.
+                    // This is crucial to ensure Maven isn't holding onto old 'SimpleCustomerApp' references.
+                    sh "rm -rf ${HOME}/.m2/repository/com/visualpathit/SimpleCustomerApp"
+                    sh "rm -rf ${HOME}/.m2/repository/com/visualpathit/Simpleservlet"
+                    echo "Cleaned local Maven repository for com.visualpathit artifacts."
+                }
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'mvn clean package -DskipTests'
@@ -29,7 +42,6 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    
                     sh 'mvn sonar:sonar -Dsonar.projectKey=Simpleservlet' 
                 }
             }
@@ -39,8 +51,6 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASSWORD', usernameVariable: 'NEXUS_USERNAME')]) {
-                        
-                       
                         def nexusSettingsContent = """<?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.1.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -48,14 +58,13 @@ pipeline {
 
   <servers>
     <server>
-      <!-- The ID 'nexus' must match the distributionManagement/repository ID in your project's pom.xml -->
       <id>nexus</id>
       <username>${NEXUS_USERNAME}</username>
       <password>${NEXUS_PASSWORD}</password>
     </server>
   </servers>
 
-  <!-- IMPORTANT: Commented out the mirror section.
+  <!-- IMPORTANT: The mirror section is commented out here as well.
        This allows Maven to resolve standard dependencies (like javax.servlet-api)
        from Maven Central, while still using Nexus for your project's deployment.
        For a proper Nexus setup, you would typically have a Nexus group repository
