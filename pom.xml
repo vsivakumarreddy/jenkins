@@ -51,7 +51,7 @@
                 <version>2.2</version>
                 <configuration>
                     <url>http://44.212.0.147:8080/manager/text</url>
-                    <path>/SimpleCustomerApp</path> <!-- Consider changing this to /Simpleservlet -->
+                    <path>/Simpleservlet</path> <!-- Consider changing this to /Simpleservlet -->
                     <update>true</update>
                     <server>tomcat-server</server>
                     <tomcatVersion>9.0.105</tomcatVersion>
