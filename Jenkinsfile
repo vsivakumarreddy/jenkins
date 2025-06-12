@@ -2,34 +2,29 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'    
-        jdk 'Java21'    
+        // Ensure this Maven version is configured in Jenkins > Global Tool Configuration
+        maven 'Maven3'
     }
 
     environment {
         SONARQUBE_ENV = 'MySonarQube'
         NEXUS_CREDENTIALS_ID = 'nexus-deploy-credentials'
         TOMCAT_CREDENTIALS_ID = 'tomcat-manager-credentials'
-        SLACK_CREDENTIALS_ID = 'slack-token'    
+        SLACK_CREDENTIALS_ID = 'slack-token'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/vsivakumarreddy/jenkins.git' , branch: 'main'
+                git url: 'https://github.com/vsivakumarreddy/jenkins.git', branch: 'main'
             }
         }
 
-        // NEW STAGE: Clean Maven local repository to avoid old cached metadata
         stage('Clean Maven Local Repo') {
             steps {
-                script {
-                    // This command removes the specific artifact and its metadata from the local Maven cache.
-                    // This is crucial to ensure Maven isn't holding onto old 'SimpleCustomerApp' references.
-                    sh "rm -rf ${HOME}/.m2/repository/com/visualpathit/SimpleCustomerApp"
-                    sh "rm -rf ${HOME}/.m2/repository/com/visualpathit/Simpleservlet"
-                    echo "Cleaned local Maven repository for com.visualpathit artifacts."
-                }
+                sh "rm -rf ${HOME}/.m2/repository/com/visualpathit/SimpleCustomerApp"
+                sh "rm -rf ${HOME}/.m2/repository/com/visualpathit/Simpleservlet"
+                echo "Cleaned old artifacts from local Maven repository."
             }
         }
 
@@ -42,7 +37,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    sh 'mvn sonar:sonar -Dsonar.projectKey=Simpleservlet' 
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=Simpleservlet'
                 }
             }
         }
@@ -50,12 +45,15 @@ pipeline {
         stage('Upload to Nexus') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASSWORD', usernameVariable: 'NEXUS_USERNAME')]) {
-                        def nexusSettingsContent = """<?xml version="1.0" encoding="UTF-8"?>
+                    withCredentials([usernamePassword(
+                        credentialsId: NEXUS_CREDENTIALS_ID,
+                        usernameVariable: 'NEXUS_USERNAME',
+                        passwordVariable: 'NEXUS_PASSWORD'
+                    )]) {
+                        writeFile file: 'nexus-settings.xml', text: """
 <settings xmlns="http://maven.apache.org/SETTINGS/1.1.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
-
   <servers>
     <server>
       <id>nexus</id>
@@ -63,23 +61,6 @@ pipeline {
       <password>${NEXUS_PASSWORD}</password>
     </server>
   </servers>
-
-  <!-- IMPORTANT: The mirror section is commented out here.
-       This allows Maven to resolve standard dependencies (like javax.servlet-api)
-       from Maven Central, while still using Nexus for your project's deployment.
-       For a proper Nexus setup, you would typically have a Nexus group repository
-       that proxies Maven Central and point your mirror to that group. -->
-  <!--
-  <mirrors>
-    <mirror>
-      <id>nexus-all-repos</id>
-      <name>Nexus Public Repository All</name>
-      <url>http://34.233.134.210:8081/repository/simpleservlet/</url>
-      <mirrorOf>*</mirrorOf>
-    </mirror>
-  </mirrors>
-  -->
-
   <profiles>
     <profile>
       <id>nexus</id>
@@ -106,22 +87,10 @@ pipeline {
   </profiles>
 </settings>
 """
-                        // Security Warning: Passing secrets via Groovy String interpolation is insecure.
-                        // For production, consider using Jenkins' Config File Provider plugin
-                        // or injecting credentials directly into system properties for Maven.
-                        writeFile(file: 'nexus-settings.xml', text: nexusSettingsContent)
-                        
-                        echo "Contents of nexus-settings.xml:"
+
+                        echo "--- Effective Maven Settings ---"
                         sh 'cat nexus-settings.xml'
-                        echo "--- End of nexus-settings.xml ---"
-
-                        echo "Effective Maven Settings:"
                         sh "mvn help:effective-settings -s nexus-settings.xml"
-                        echo "--- End of Effective Maven Settings ---"
-
-                        echo "Effective Maven POM:"
-                        sh "mvn help:effective-pom"
-                        echo "--- End of Effective Maven POM ---"
 
                         sh "mvn deploy -DskipTests -s nexus-settings.xml"
                     }
@@ -132,12 +101,15 @@ pipeline {
         stage('Deploy to Tomcat') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: TOMCAT_CREDENTIALS_ID, passwordVariable: 'TOMCAT_PASSWORD', usernameVariable: 'TOMCAT_USERNAME')]) {
-                        def tomcatSettingsContent = """<?xml version="1.0" encoding="UTF-8"?>
+                    withCredentials([usernamePassword(
+                        credentialsId: TOMCAT_CREDENTIALS_ID,
+                        usernameVariable: 'TOMCAT_USERNAME',
+                        passwordVariable: 'TOMCAT_PASSWORD'
+                    )]) {
+                        writeFile file: 'tomcat-settings.xml', text: """
 <settings xmlns="http://maven.apache.org/SETTINGS/1.1.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
-
   <servers>
     <server>
       <id>tomcat-server</id>
@@ -147,9 +119,6 @@ pipeline {
   </servers>
 </settings>
 """
-                        // Security Warning: Passing secrets via Groovy String interpolation is insecure.
-                        writeFile(file: 'tomcat-settings.xml', text: tomcatSettingsContent)
-
                         sh "mvn tomcat7:redeploy -s tomcat-settings.xml"
                     }
                 }
@@ -159,35 +128,35 @@ pipeline {
 
     post {
         always {
-            cleanWs()    
+            cleanWs()
             echo 'Pipeline cleanup complete.'
             slackSend (
                 channel: '#team',
-                color: '#CCCC00',    
-                message: "Project *${env.JOB_NAME}* - Build #${env.BUILD_NUMBER} has finished with status: *${currentBuild.currentResult}* (<${env.BUILD_URL}|Open in Jenkins>)"
+                color: '#CCCC00',
+                message: "Project *${env.JOB_NAME}* - Build #${env.BUILD_NUMBER} finished with status: *${currentBuild.currentResult}* (<${env.BUILD_URL}|View>)"
             )
         }
         success {
             echo 'Pipeline finished successfully!'
             slackSend (
-                channel: '#team',    
-                color: 'good',        
-                message: "SUCCESS: Project *${env.JOB_NAME}* - Build #${env.BUILD_NUMBER} deployed successfully! (<${env.BUILD_URL}|Open in Jenkins>)"
+                channel: '#devops',
+                color: 'good',
+                message: "✅ SUCCESS: *${env.JOB_NAME}* - Build #${env.BUILD_NUMBER} deployed! (<${env.BUILD_URL}|Open>)"
             )
         }
         failure {
             echo 'Pipeline failed!'
             slackSend (
-                channel: '#team',    
-                color: 'danger',    
-                message: "FAILURE: Project *${env.JOB_NAME}* - Build #${env.BUILD_NUMBER} failed! (<${env.BUILD_URL}|Open in Jenkins>)"
+                channel: '#devops',
+                color: 'danger',
+                message: "❌ FAILURE: *${env.JOB_NAME}* - Build #${env.BUILD_NUMBER} failed. (<${env.BUILD_URL}|Check logs>)"
             )
         }
         unstable {
             slackSend (
                 channel: '#team',
-                color: 'warning',    
-                message: "UNSTABLE: Project *${env.JOB_NAME}* - Build #${env.BUILD_NUMBER} is unstable! (<${env.BUILD_URL}|Open in Jenkins>)"
+                color: 'warning',
+                message: "⚠️ UNSTABLE: *${env.JOB_NAME}* - Build #${env.BUILD_NUMBER} had issues. (<${env.BUILD_URL}|See details>)"
             )
         }
     }
